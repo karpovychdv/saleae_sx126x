@@ -8,11 +8,12 @@ from enum import Enum
 c_uint8 = ctypes.c_uint8
 c_uint16 = ctypes.c_uint16
 
+F_STEP = 32e6 / (1 << 25)  # 0.95367431640625 Hz
 
 class PacketType(Enum):
     NONE = 0
-    LORA = 1,
-    FSK = 2,
+    LORA = 1
+    FSK = 2
     FHSS = 3
 
 class IrqFlags_bits( ctypes.LittleEndianStructure ):
@@ -204,7 +205,7 @@ class Hla(HighLevelAnalyzer):
             except Exception as error:
                 my_str = my_str + ' BW(' + hex(self.ba_mosi[5]) + ' ' + str(error) + ') '
             fdev = int.from_bytes(bytearray(self.ba_mosi[6:9]), 'big')
-            hz = fdev*32000000/(1<<25)
+            hz = fdev * F_STEP
             my_str = my_str + ' fdev=' + str(round(hz)) + "Hz"
         elif self.pt == PacketType.LORA:
             sf = self.ba_mosi[1]
@@ -328,7 +329,8 @@ class Hla(HighLevelAnalyzer):
 
     def SetRfFrequency(self):
         frf = int.from_bytes(bytearray(self.ba_mosi[1:5]), 'big')
-        return 'SetRfFrequency ' + str(frf)
+        rf_frequency_mhz = round(frf * F_STEP / 1e6, 3)
+        return 'SetRfFrequency ' + str(frf) + ' ' + str(rf_frequency_mhz) + 'MHz'
 
     def SetCadParams(self):
         cadSymbolNum = self.ba_mosi[1]
